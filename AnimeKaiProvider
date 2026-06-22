@@ -1,0 +1,145 @@
+{
+  "name": "AnimeKai Repository",
+  "description": "Unofficial CloudStream extension for AnimeKai (animekai.be) – free HD anime with Sub & Dub.",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/AnimeKaiProvider/builds/plugins.json"
+  ]
+}
+
+rootProject.name = "AnimeKaiExtension"
+
+// Add your plugin module here
+include(":AnimeKaiProvider")
+
+android.useAndroidX=true
+kotlin.code.style=official
+
+// Use the CloudStream Gradle plugin system
+// based on https://github.com/recloudstream/TestPlugins
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+        classpath("com.github.recloudstream:gradle:-SNAPSHOT")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    }
+}
+
+task<Delete>("clean") {
+    delete(rootProject.buildDir)
+}
+
+# AnimeKai CloudStream Extension
+
+A CloudStream 3 plugin that brings [AnimeKai](https://animekai.be) into the CloudStream app.  
+Stream free HD anime (Sub & Dub) — TV series, Movies, OVAs, ONAs, Specials.
+
+---
+
+## Features
+- 🏠 **Home page** — Latest Updates, New Releases, Ongoing, TV, Movies, OVAs
+- 🔍 **Search** — full-text search across AnimeKai's library
+- 📺 **Episode list** — all episodes, automatically paginated
+- ▶️ **Video links** — auto-detects embedded players (Vidstream, Filemoon, Streamtape, etc.)
+- 🌐 Sub & Dub support
+
+---
+
+## How to install in CloudStream
+
+1. Open **CloudStream** → **Settings** → **Extensions** → **Add Repository**
+2. Paste this URL in the *Repository URL* field:
+
+```
+https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/AnimeKaiProvider/builds/repo.json
+```
+
+3. Tap **Add** / **Next**, then open the repo and tap **Download** next to *AnimeKai*.
+4. Go back to the home screen, tap **None** (bottom-right), and select **AnimeKai**.
+
+---
+
+## Developer setup
+
+### Requirements
+- Android Studio (Hedgehog or newer) **or** any IDE with Kotlin + Gradle support
+- JDK 17+
+- Git
+
+### Steps
+
+```bash
+# 1. Fork https://github.com/recloudstream/TestPlugins  (required template)
+# 2. Clone YOUR fork
+git clone https://github.com/YOUR_GITHUB_USERNAME/AnimeKaiProvider.git
+cd AnimeKaiProvider
+
+# 3. Copy the files from this repo into your fork
+
+# 4. Build a test APK and sideload to your device
+./gradlew AnimeKaiProvider:deployWithAdb   # deploys directly if adb is connected
+
+# -- OR -- build .cs3 file manually
+./gradlew AnimeKaiProvider:make
+# Output: builds/AnimeKaiProvider.cs3
+```
+
+### Enabling auto-builds (GitHub Actions)
+
+1. Push to GitHub.
+2. Go to **Settings → Actions → General** → select **Allow all actions and reusable workflows**.
+3. Go to **Settings → Actions → General → Workflow permissions** → select **Read and write permissions**.
+4. Every push to `main` will now auto-build and deploy to the `builds` branch.
+
+---
+
+## Project structure
+
+```
+AnimeKaiProvider/
+├── .github/
+│   └── workflows/
+│       └── build.yml              ← GitHub Actions CI
+├── AnimeKaiProvider/
+│   ├── build.gradle.kts           ← Plugin metadata (version, name, icon …)
+│   └── src/main/kotlin/com/animekai/
+│       ├── AnimeKaiPlugin.kt      ← Entry point registered with CloudStream
+│       └── AnimeKaiProvider.kt    ← All scraping logic (search / load / links)
+├── build.gradle.kts               ← Root Gradle config
+├── settings.gradle.kts
+├── gradle.properties
+└── repo.json                      ← CloudStream repository manifest
+```
+
+---
+
+## Notes on video extraction
+
+AnimeKai loads its player through **iframes**.  
+`loadExtractor()` (built into CloudStream) handles most common hosts automatically.
+
+If a server shows "No links found":
+- Try switching to **Server 2** in the episode player.
+- Open the episode page in a browser, open **DevTools → Network → Fetch/XHR**, and look for the request that returns an embed URL — then update `loadLinks()` in `AnimeKaiProvider.kt` to hit that API endpoint directly.
+
+---
+
+## Disclaimer
+
+This extension is unofficial and not affiliated with AnimeKai.  
+It does not host any content — it only scrapes publicly accessible pages.
